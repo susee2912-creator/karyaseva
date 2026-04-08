@@ -7,7 +7,8 @@ const calculateRisk = (budget) => {
 };
 
 exports.postJob = async (req, res) => {
-  const { title, description, budget, clientId } = req.body;
+  const { title, description, budget } = req.body;
+  const clientId = req.body.clientId || req.user._id || req.user.id;
 
   // AI-based Fake Job / Fraud Detection Heuristic
   const suspiciousKeywords = ['test', 'dummy', 'fake', 'asdf', 'scam', 'free work'];

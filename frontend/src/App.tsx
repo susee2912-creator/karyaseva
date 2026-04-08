@@ -13,7 +13,7 @@ import PostJob from './pages/PostJob';
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
+      <div className="min-h-screen bg-[#F0F4F8] text-[#1A2B4A] font-sans">
         <Navbar />
         <main className="container mx-auto px-4 py-8">
           <Routes>

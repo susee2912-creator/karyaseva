@@ -16,6 +16,13 @@ const JobBoard = () => {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     }).then(res => {
       setJobs(res.data);
+    }).catch(err => {
+      console.error(err);
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login');
+      }
     });
   }, []);
 

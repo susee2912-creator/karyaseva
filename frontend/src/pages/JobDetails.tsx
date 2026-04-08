@@ -20,6 +20,13 @@ const JobDetails = () => {
     }).then(res => {
       const found = res.data.find((j: any) => (j._id || j.id).toString() === id);
       setJob(found);
+    }).catch(err => {
+      console.error(err);
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login');
+      }
     });
   }, [id]);
 

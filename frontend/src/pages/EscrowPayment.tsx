@@ -20,6 +20,13 @@ const EscrowPayment = () => {
       if (found && found.status === 'completed') {
         setPaymentPhase('released');
       }
+    }).catch(err => {
+      console.error(err);
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     });
   }, [jobId]);
 
