@@ -1,19 +1,27 @@
-const { DataTypes } = require("sequelize");
-const { sequelize } = require("../config/db");
+const mongoose = require("mongoose");
 
-const Milestone = sequelize.define("Milestone", {
-  title: {
-    type: DataTypes.STRING,
-    allowNull: false,
+const milestoneSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+    },
+    amount: {
+      type: Number,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "completed", "released"],
+      default: "pending",
+    },
+    paymentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Payment",
+      required: true,
+    },
   },
-  amount: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  status: {
-    type: DataTypes.ENUM("pending", "completed", "released"),
-    defaultValue: "pending",
-  },
-});
+  { timestamps: true }
+);
 
-module.exports = Milestone;
+module.exports = mongoose.model("Milestone", milestoneSchema);

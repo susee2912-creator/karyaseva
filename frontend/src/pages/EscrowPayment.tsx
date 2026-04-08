@@ -12,8 +12,10 @@ const EscrowPayment = () => {
   const user = userStr ? JSON.parse(userStr) : null;
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/jobs/all').then(res => {
-      const found = res.data.find((j: any) => j.id.toString() === jobId);
+    axios.get('http://localhost:5000/api/jobs/all', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    }).then(res => {
+      const found = res.data.find((j: any) => (j._id || j.id).toString() === jobId);
       setJob(found);
       if (found && found.status === 'completed') {
         setPaymentPhase('released');
@@ -24,7 +26,7 @@ const EscrowPayment = () => {
   const handleDeposit = async () => {
     try {
       await axios.post('http://localhost:5000/api/payments/deposit', {
-        jobId: job.id,
+        jobId: job._id || job.id,
         amount: job.budget,
       }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       setPaymentPhase('deposited');
@@ -48,7 +50,7 @@ const EscrowPayment = () => {
   const submitWorkProof = async () => {
     try {
       const res = await axios.post('http://localhost:5000/api/jobs/submit', {
-        jobId: job.id,
+        jobId: job._id || job.id,
         workContent: "Final Deliverables.zip content hash"
       }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       alert(`Work submitted securely! Blockchain Hash: ${res.data.workProofHash}`);

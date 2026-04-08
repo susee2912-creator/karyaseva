@@ -13,11 +13,12 @@ exports.addReview = async (req, res) => {
     });
 
     // Update freelancer's trust score
-    const freelancer = await User.findByPk(freelancerId);
+    const freelancer = await User.findById(freelancerId);
     if (freelancer) {
       const newScore = Math.min(100, freelancer.trustScore + (rating - 3) * 5); // Basic heuristic
-      const completedJobs = freelancer.completedJobs + 1;
-      await freelancer.update({ trustScore: newScore, completedJobs });
+      freelancer.completedJobs += 1;
+      freelancer.trustScore = newScore;
+      await freelancer.save();
     }
 
     res.json({ message: "Review added successfully", review });
@@ -29,7 +30,7 @@ exports.addReview = async (req, res) => {
 exports.getReviews = async (req, res) => {
   try {
     const { freelancerId } = req.params;
-    const reviews = await Review.findAll({ where: { freelancerId } });
+    const reviews = await Review.find({ freelancerId });
     res.json(reviews);
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -18,13 +18,13 @@ exports.hireFreelancer = async (req, res) => {
   const { applicationId, jobId } = req.body;
 
   try {
-    const application = await Application.findByPk(applicationId);
+    const application = await Application.findById(applicationId);
     if (!application) return res.status(404).json({ message: "Application not found" });
 
     application.status = "accepted";
     await application.save();
 
-    const job = await Job.findByPk(jobId);
+    const job = await Job.findById(jobId);
     if (job) {
       job.status = "in-progress";
       job.freelancerId = application.freelancerId;
@@ -40,10 +40,8 @@ exports.hireFreelancer = async (req, res) => {
 exports.getJobApplications = async (req, res) => {
   try {
     const { jobId } = req.params;
-    const applications = await Application.findAll({
-      where: { jobId },
-      include: [{ model: User, attributes: ['id', 'name', 'trustScore', 'verified'] }]
-    });
+    const applications = await Application.find({ jobId })
+      .populate("freelancerId", "name trustScore verified");
     res.json(applications);
   } catch (error) {
     res.status(500).json({ error: error.message });

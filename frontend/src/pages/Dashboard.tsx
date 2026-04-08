@@ -18,7 +18,9 @@ const Dashboard = () => {
     const userData = JSON.parse(userStr);
     setUser(userData);
     
-    axios.get('http://localhost:5000/api/jobs/all').then(res => {
+    axios.get('http://localhost:5000/api/jobs/all', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    }).then(res => {
       const filtered = res.data.filter((j: any) => 
         userData.role === 'client' ? j.clientId === userData.id : j.freelancerId === userData.id || j.status === 'open'
       );
@@ -111,7 +113,7 @@ const Dashboard = () => {
               <p className="text-gray-500">No active or completed jobs found.</p>
             ) : (
               jobs.map((job: any) => (
-                <div key={job.id} className="border border-gray-100 rounded-lg p-4 hover:shadow-sm transition bg-gray-50">
+                <div key={job._id || job.id} className="border border-gray-100 rounded-lg p-4 hover:shadow-sm transition bg-gray-50">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-bold text-lg text-gray-900 line-clamp-1">{job.title}</h3>
                     <span className={`flex-shrink-0 ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium uppercase tracking-wide ${job.status === 'open' ? 'bg-yellow-100 text-yellow-800' : job.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
@@ -119,12 +121,12 @@ const Dashboard = () => {
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm mt-3">
-                    <button onClick={() => navigate(`/jobs/${job.id}`)} className="text-indigo-600 hover:text-indigo-800 font-medium">View Job →</button>
+                    <button onClick={() => navigate(`/jobs/${job._id || job.id}`)} className="text-indigo-600 hover:text-indigo-800 font-medium">View Job →</button>
                     <div className="space-x-2">
-                      <button onClick={() => navigate(`/escrow/${job.id}`)} className="text-gray-600 hover:text-gray-800 font-medium">Escrow</button>
+                      <button onClick={() => navigate(`/escrow/${job._id || job.id}`)} className="text-gray-600 hover:text-gray-800 font-medium">Escrow</button>
                       {user.role === 'client' && job.status === 'completed' && job.freelancerId && (
                         <button 
-                          onClick={() => handleReview(job.id, job.freelancerId)}
+                          onClick={() => handleReview(job._id || job.id, job.freelancerId)}
                           className="text-yellow-600 hover:text-yellow-800 font-medium flex items-center"
                         >
                           <Star className="w-4 h-4 mr-1" /> Review

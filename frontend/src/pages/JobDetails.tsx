@@ -15,15 +15,17 @@ const JobDetails = () => {
     const userStr = localStorage.getItem('user');
     if (userStr) setUser(JSON.parse(userStr));
 
-    axios.get('http://localhost:5000/api/jobs/all').then(res => {
-      const found = res.data.find((j: any) => j.id.toString() === id);
+    axios.get('http://localhost:5000/api/jobs/all', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    }).then(res => {
+      const found = res.data.find((j: any) => (j._id || j.id).toString() === id);
       setJob(found);
     });
   }, [id]);
 
   useEffect(() => {
     if (user?.role === 'client' && job?.clientId === user.id) {
-      axios.get(`http://localhost:5000/api/applications/job/${job.id}`, { 
+      axios.get(`http://localhost:5000/api/applications/job/${job._id || job.id}`, { 
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } 
       })
       .then(res => setApplications(res.data))
@@ -34,7 +36,7 @@ const JobDetails = () => {
   const handleApply = async () => {
     try {
       await axios.post('http://localhost:5000/api/applications/apply', {
-        jobId: job.id,
+        jobId: job._id || job.id,
         freelancerId: user.id,
         proposal: proposalText
       }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
@@ -49,9 +51,9 @@ const JobDetails = () => {
     try {
       await axios.post('http://localhost:5000/api/applications/hire', {
         applicationId: appId,
-        jobId: job.id
+        jobId: job._id || job.id
       }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
-      navigate(`/escrow/${job.id}`); // Proceed to Escrow deposit page for this job
+      navigate(`/escrow/${job._id || job.id}`); // Proceed to Escrow deposit page for this job
     } catch (error) {
       alert('Failed to hire freelancer');
     }
@@ -142,7 +144,7 @@ const JobDetails = () => {
               <div>
                 <p className="font-semibold text-gray-800 mb-3">Job is currently {job.status}.</p>
                 <button 
-                  onClick={() => navigate(`/escrow/${job.id}`)}
+                  onClick={() => navigate(`/escrow/${job._id || job.id}`)}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-6 rounded-md font-medium transition shadow-sm"
                 >
                   Go to Escrow Dashboard

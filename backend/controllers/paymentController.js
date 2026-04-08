@@ -16,9 +16,9 @@ exports.deposit = async (req, res) => {
       const milestoneRecords = milestones.map(m => ({
         title: m.title,
         amount: m.amount,
-        paymentId: payment.id,
+        paymentId: payment._id,
       }));
-      await Milestone.bulkCreate(milestoneRecords);
+      await Milestone.insertMany(milestoneRecords);
     }
 
     res.json({ payment, message: "Escrow deposited successfully" });
@@ -30,9 +30,9 @@ exports.deposit = async (req, res) => {
 exports.releaseMilestone = async (req, res) => {
   const { milestoneId } = req.body;
   try {
-    await Milestone.update(
-      { status: "released" },
-      { where: { id: milestoneId } }
+    await Milestone.updateOne(
+      { _id: milestoneId },
+      { status: "released" }
     );
     res.json({ message: "Milestone Released" });
   } catch (error) {
@@ -44,13 +44,13 @@ exports.releaseOptions = async (req, res) => {
   const { paymentId } = req.body;
   
   try {
-    await Payment.update(
-      { status: "released" },
-      { where: { id: paymentId } }
+    await Payment.updateOne(
+      { _id: paymentId },
+      { status: "released" }
     );
-    await Milestone.update(
-      { status: "released" },
-      { where: { paymentId, status: "pending" } }
+    await Milestone.updateMany(
+      { paymentId, status: "pending" },
+      { status: "released" }
     );
     res.json({ message: "Full Payment Released" });
   } catch (error) {
@@ -61,7 +61,7 @@ exports.releaseOptions = async (req, res) => {
 exports.generateInvoice = async (req, res) => {
   try {
     const paymentId = req.params.paymentId;
-    const payment = await Payment.findByPk(paymentId, { include: [Job] });
+    const payment = await Payment.findById(paymentId).populate("jobId");
     
     if (!payment) return res.status(404).json({ message: "Payment not found" });
 
@@ -74,9 +74,9 @@ exports.generateInvoice = async (req, res) => {
 
     doc.fontSize(25).text("KARYASEVA GST INVOICE", { align: "center" });
     doc.moveDown();
-    doc.fontSize(16).text(`Payment ID: ${payment.id}`);
-    doc.text(`Job ID: ${payment.jobId}`);
-    doc.text(`Job Title: ${payment.Job ? payment.Job.title : "N/A"}`);
+    doc.fontSize(16).text(`Payment ID: ${payment._id}`);
+    doc.text(`Job ID: ${payment.jobId._id}`);
+    doc.text(`Job Title: ${payment.jobId && payment.jobId.title ? payment.jobId.title : "N/A"}`);
     
     const amount = payment.amount;
     const gstRate = 0.18; // 18% GST (CGST + SGST)

@@ -11,12 +11,14 @@ exports.uploadID = async (req, res) => {
 
     const idDocument = `/uploads/${req.file.filename}`;
 
-    const user = await User.findByPk(userId);
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    await user.update({ verified: true, idDocument });
+    user.verified = true;
+    user.idDocument = idDocument;
+    await user.save();
 
     res.json({ message: "Profile Verified Successfully", user });
   } catch (error) {

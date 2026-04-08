@@ -1,13 +1,19 @@
-const { DataTypes } = require("sequelize");
-const { sequelize } = require("../config/db");
+const mongoose = require("mongoose");
 
-const Payment = sequelize.define("Payment", {
-  amount: DataTypes.INTEGER,
-
-  status: {
-    type: DataTypes.STRING,
-    defaultValue: "deposited",
+const paymentSchema = new mongoose.Schema(
+  {
+    amount: { type: Number, required: true },
+    status: {
+      type: String,
+      default: "deposited",
+    },
+    jobId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Job",
+      required: true,
+    },
   },
-});
+  { timestamps: true }
+);
 
-module.exports = Payment;
+module.exports = mongoose.model("Payment", paymentSchema);

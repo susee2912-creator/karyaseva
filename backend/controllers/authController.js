@@ -24,7 +24,7 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await User.findOne({ where: { email } });
+  const user = await User.findOne({ email });
 
   if (!user) return res.status(400).json({ message: "User not found" });
 
@@ -32,7 +32,7 @@ exports.login = async (req, res) => {
 
   if (!match) return res.status(400).json({ message: "Invalid password" });
 
-  const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET);
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
 
   res.json({ token, user });
 };
@@ -42,9 +42,9 @@ exports.uploadId = async (req, res) => {
     const { userId } = req.body;
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
 
-    await User.update(
-      { idDocument: req.file.path, verified: true }, // Simulate instant verification for demo
-      { where: { id: userId } }
+    await User.updateOne(
+      { _id: userId },
+      { idDocument: req.file.path, verified: true }
     );
 
     res.json({ message: "ID Uploaded successfully", path: req.file.path });

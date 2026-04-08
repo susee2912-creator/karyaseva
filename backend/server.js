@@ -4,37 +4,7 @@ const dotenv = require("dotenv");
 
 dotenv.config();
 
-const { connectDB, sequelize } = require("./config/db");
-
-// ✅ Import models FIRST
-const User = require("./models/User");
-const Job = require("./models/Job");
-const Application = require("./models/Application");
-const Payment = require("./models/Payment");
-const Milestone = require("./models/Milestone");
-const Review = require("./models/Review");
-
-// ✅ Setup relationships
-User.hasMany(Job, { foreignKey: "clientId" });
-Job.belongsTo(User, { foreignKey: "clientId" });
-
-User.hasMany(Application, { foreignKey: "freelancerId" });
-Application.belongsTo(User, { foreignKey: "freelancerId" });
-
-Job.hasMany(Application, { foreignKey: "jobId" });
-Application.belongsTo(Job, { foreignKey: "jobId" });
-
-Job.hasOne(Payment, { foreignKey: "jobId" });
-Payment.belongsTo(Job, { foreignKey: "jobId" });
-
-Payment.hasMany(Milestone, { foreignKey: "paymentId" });
-Milestone.belongsTo(Payment, { foreignKey: "paymentId" });
-
-Job.hasMany(Review, { foreignKey: "jobId" });
-Review.belongsTo(Job, { foreignKey: "jobId" });
-
-User.hasMany(Review, { foreignKey: "freelancerId" });
-Review.belongsTo(User, { foreignKey: "freelancerId" });
+const { connectDB } = require("./config/db");
 
 const app = express();
 
@@ -53,11 +23,6 @@ app.use("/api/reviews", require("./routes/reviewRoutes"));
 
 // Serve static files (uploaded IDs)
 app.use("/uploads", express.static("uploads"));
-
-// ✅ Sync DB AFTER everything
-sequelize.sync({ alter: true })
-  .then(() => console.log("Tables created"))
-  .catch(err => console.log(err));
 
 app.listen(5000, () => {
   console.log("Server running on port 5000");

@@ -30,7 +30,7 @@ exports.postJob = async (req, res) => {
 };
 
 exports.getJobs = async (req, res) => {
-  const jobs = await Job.findAll();
+  const jobs = await Job.find();
   res.json(jobs);
 };
 
@@ -43,9 +43,9 @@ exports.submitWork = async (req, res) => {
     // Hash the work content (acting as a blockchain-like proof)
     const workProofHash = crypto.createHash('sha256').update(workContent).digest('hex');
 
-    await Job.update(
-      { status: "completed", workProofHash },
-      { where: { id: jobId } }
+    await Job.updateOne(
+      { _id: jobId },
+      { status: "completed", workProofHash }
     );
 
     res.json({ message: "Work submitted successfully", workProofHash });

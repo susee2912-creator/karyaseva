@@ -12,7 +12,9 @@ const JobBoard = () => {
     const userStr = localStorage.getItem('user');
     if (userStr) setUser(JSON.parse(userStr));
 
-    axios.get('http://localhost:5000/api/jobs/all').then(res => {
+    axios.get('http://localhost:5000/api/jobs/all', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    }).then(res => {
       setJobs(res.data);
     });
   }, []);
@@ -52,7 +54,7 @@ const JobBoard = () => {
           </div>
         ) : (
           jobs.map((job: any) => (
-            <div key={job.id} onClick={() => navigate(`/jobs/${job.id}`)} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col sm:flex-row justify-between items-start sm:items-center">
+            <div key={job._id || job.id} onClick={() => navigate(`/jobs/${job._id || job.id}`)} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col sm:flex-row justify-between items-start sm:items-center">
               <div className="flex-1">
                 <div className="flex items-center mb-2">
                   <h2 className="text-xl font-bold text-gray-900 mr-3">{job.title}</h2>
