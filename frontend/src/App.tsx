@@ -9,13 +9,16 @@ import JobBoard from './pages/JobBoard';
 import JobDetails from './pages/JobDetails';
 import EscrowPayment from './pages/EscrowPayment';
 import PostJob from './pages/PostJob';
+import Profile from './pages/Profile';
+import AdminPanel from './pages/AdminPanel';
+import RatingReview from './pages/RatingReview';
 
 function App() {
   return (
     <Router>
       <div className="min-h-screen bg-[#F0F4F8] text-[#1A2B4A] font-sans">
         <Navbar />
-        <main className="container mx-auto px-4 py-8">
+        <main className="w-full flex-grow">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
@@ -25,6 +28,9 @@ function App() {
             <Route path="/jobs" element={<JobBoard />} />
             <Route path="/jobs/:id" element={<JobDetails />} />
             <Route path="/escrow/:jobId" element={<EscrowPayment />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/review/:jobId" element={<RatingReview />} />
           </Routes>
         </main>
       </div>

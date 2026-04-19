@@ -1,7 +1,8 @@
 const Payment = require("../models/Payment");
 const Milestone = require("../models/Milestone");
 const Job = require("../models/Job");
-const PDFDocument = require("pdfkit");
+const Escrow = require("../models/Escrow");
+const GstInvoice = require("../models/GstInvoice");
 
 exports.deposit = async (req, res) => {
   const { jobId, amount, milestones } = req.body;
@@ -41,9 +42,12 @@ exports.releaseMilestone = async (req, res) => {
 };
 
 exports.releaseOptions = async (req, res) => {
-  const { paymentId } = req.body;
+  const { paymentId, jobId, clientId, freelancerId } = req.body;
   
   try {
+    const payment = await Payment.findById(paymentId);
+    if (!payment) return res.status(404).json({ error: "Payment not found" });
+
     await Payment.updateOne(
       { _id: paymentId },
       { status: "released" }
@@ -52,7 +56,23 @@ exports.releaseOptions = async (req, res) => {
       { paymentId, status: "pending" },
       { status: "released" }
     );
-    res.json({ message: "Full Payment Released" });
+
+    // Create GstInvoice
+    const amount = payment.amount;
+    const platformFee = amount * 0.05; // 5% fee
+    const gstAmount = amount * 0.18; // 18% GST on platform fee or total? Usually on total service, or fee. Assuming 18% on full amount for demo.
+
+    const invoice = await GstInvoice.create({
+      jobId,
+      clientId,
+      freelancerId,
+      amount,
+      gstAmount,
+      platformFee,
+      pdfUrl: `/invoice-data/${paymentId}` // Placeholder, actual generation is on frontend via data
+    });
+
+    res.json({ message: "Full Payment Released", invoice });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -65,32 +85,9 @@ exports.generateInvoice = async (req, res) => {
     
     if (!payment) return res.status(404).json({ message: "Payment not found" });
 
-    const doc = new PDFDocument();
-    let filename = `GST_Invoice_${paymentId}.pdf`;
-    res.setHeader("Content-disposition", `attachment; filename="${filename}"`);
-    res.setHeader("Content-type", "application/pdf");
+    const invoiceData = await GstInvoice.findOne({ amount: payment.amount, jobId: payment.jobId._id }).sort({ createdAt: -1 });
 
-    doc.pipe(res);
-
-    doc.fontSize(25).text("KARYASEVA GST INVOICE", { align: "center" });
-    doc.moveDown();
-    doc.fontSize(16).text(`Payment ID: ${payment._id}`);
-    doc.text(`Job ID: ${payment.jobId._id}`);
-    doc.text(`Job Title: ${payment.jobId && payment.jobId.title ? payment.jobId.title : "N/A"}`);
-    
-    const amount = payment.amount;
-    const gstRate = 0.18; // 18% GST (CGST + SGST)
-    const baseAmount = amount / 1.18;
-    const gstAmount = amount - baseAmount;
-
-    doc.moveDown();
-    doc.fontSize(14).text(`Base Amount: ₹${baseAmount.toFixed(2)}`);
-    doc.text(`GST (18%): ₹${gstAmount.toFixed(2)}`);
-    doc.text(`Total Amount Paid: ₹${amount.toFixed(2)}`);
-
-    doc.moveDown().text("India-First Platform | Low Fees & Full Support");
-    
-    doc.end();
+    res.json({ payment, invoiceData });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

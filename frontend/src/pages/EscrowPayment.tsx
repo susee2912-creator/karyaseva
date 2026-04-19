@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import { DownloadCloud, CheckCircle, FileCheck, Circle, ShieldCheck } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const EscrowPayment = () => {
   const { jobId } = useParams();
@@ -47,6 +49,15 @@ const EscrowPayment = () => {
     // Demo implementation calling release options
     try {
       // In a full implementation we'd pass paymentId, but we can just update job status for demo
+      // Assuming payment already happened and we just tell backend to release.
+      // We will pretend paymentId is the jobId for this demo or fetch it.
+      await axios.post('http://localhost:5000/api/payments/release-options', {
+        paymentId: job._id || job.id, // Mocked payment ID
+        jobId: job._id || job.id,
+        clientId: job.clientId,
+        freelancerId: job.freelancerId
+      }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+
       alert('Funds released successfully to freelancer!');
       setPaymentPhase('released');
     } catch (error) {
@@ -67,53 +78,95 @@ const EscrowPayment = () => {
     }
   };
 
-  const handleDownloadInvoice = () => {
-    // Assuming paymentId is 1 for demo purposes since we aren't fetching Payment explicitly
-    window.open(`http://localhost:5000/api/payments/invoice/1`, '_blank');
+  const handleDownloadInvoice = async () => {
+    try {
+      // Mocked payment ID fetch
+      const res = await axios.get(`http://localhost:5000/api/payments/invoice/${job._id || job.id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }});
+      
+      const { payment, invoiceData } = res.data;
+      
+      const doc = new jsPDF();
+      doc.setFontSize(22);
+      doc.text("KaryaSeva GST Invoice", 105, 20, { align: "center" });
+
+      doc.setFontSize(12);
+      doc.text(`Invoice Date: ${new Date().toLocaleDateString()}`, 14, 40);
+      doc.text(`Job: ${job.title}`, 14, 50);
+
+      const amount = job.budget;
+      const gstRate = 0.18;
+      const baseAmount = amount / (1 + gstRate);
+      const gstAmount = amount - baseAmount;
+
+      autoTable(doc, {
+        startY: 60,
+        head: [['Description', 'Amount (INR)']],
+        body: [
+          ['Consulting Services / Freelance Work', baseAmount.toFixed(2)],
+          ['CGST (9%)', (gstAmount / 2).toFixed(2)],
+          ['SGST (9%)', (gstAmount / 2).toFixed(2)],
+          ['Platform Fee', (amount * 0.05).toFixed(2)],
+        ],
+        foot: [['Total Charged', amount.toFixed(2)]],
+      });
+
+      doc.save(`KaryaSeva_Invoice_${job._id || job.id}.pdf`);
+    } catch (err) {
+      alert('Could not fetch invoice data.');
+    }
   };
 
   if (!job) return <div className="p-8 text-center text-gray-500">Loading Escrow...</div>;
 
   return (
-    <div className="max-w-4xl mx-auto py-8">
-      <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200">
-        <div className="flex justify-between items-center mb-8 border-b pb-6 border-gray-100">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Smart Escrow Workspace</h1>
-            <p className="text-gray-500">Securely manage payment for Job: {job.title}</p>
+    <div className="bg-[#F0F4F8] min-h-[calc(100vh-80px)] py-12 px-4 shadow-inner">
+      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+        
+        {/* Banner Section */}
+        <div className="bg-[#1A2B4A] p-8 text-white relative">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-extrabold text-white mb-2">Smart Escrow Workspace</h1>
+              <p className="text-gray-400 font-medium tracking-wide">Job Timeline: <span className="text-white font-bold">{job.title}</span></p>
+            </div>
+            {paymentPhase === 'released' && (
+              <button 
+                onClick={handleDownloadInvoice}
+                className="flex items-center text-[#1A2B4A] bg-[#F59E0B] hover:bg-[#D97706] hover:text-white px-5 py-2.5 rounded-lg font-extrabold transition shadow-md"
+              >
+                <DownloadCloud className="w-5 h-5 mr-2" /> Download GST Invoice
+              </button>
+            )}
+            {paymentPhase !== 'released' && (
+              <div className="bg-white/10 p-3 rounded-xl border border-white/20">
+                <ShieldCheck className="w-8 h-8 text-[#10B981]" />
+              </div>
+            )}
           </div>
-          {paymentPhase === 'released' && (
-            <button 
-              onClick={handleDownloadInvoice}
-              className="flex items-center text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg font-medium transition shadow-sm border border-blue-200"
-            >
-              <DownloadCloud className="w-5 h-5 mr-2" /> GST Invoice
-            </button>
-          )}
         </div>
 
-        <div className="space-y-6 mb-10">
-          <div className={`p-6 rounded-lg border flex flex-col md:flex-row justify-between items-center ${paymentPhase === 'deposited' ? 'bg-blue-50 border-blue-200' : paymentPhase === 'released' ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
+        <div className="p-8">
+          <div className={`p-8 rounded-xl border-2 flex flex-col md:flex-row justify-between items-center ${paymentPhase === 'deposited' ? 'bg-blue-50 border-blue-200' : paymentPhase === 'released' ? 'bg-[#ECFDF5] border-[#10B981]' : 'bg-[#F0F4F8] border-gray-200'}`}>
             <div className="flex items-center mb-4 md:mb-0">
               {paymentPhase === 'released' ? (
-                <CheckCircle className="w-8 h-8 text-green-500 mr-4" />
+                <CheckCircle className="w-10 h-10 text-[#10B981] mr-4 shadow-sm" />
               ) : paymentPhase === 'deposited' ? (
-                <ShieldCheck className="w-8 h-8 text-blue-500 mr-4" />
+                <ShieldCheck className="w-10 h-10 text-blue-500 mr-4 shadow-sm" />
               ) : (
-                <Circle className="w-8 h-8 text-gray-400 mr-4" />
+                <Circle className="w-10 h-10 text-gray-400 mr-4 shadow-sm" />
               )}
               <div>
-                <h3 className="font-bold text-lg text-gray-900">Project Escrow Fund</h3>
-                <p className="text-sm text-gray-500 uppercase font-semibold">Status: {paymentPhase}</p>
+                <h3 className="font-extrabold text-xl text-[#1A2B4A]">Project Escrow Fund</h3>
+                <p className="text-xs text-gray-500 uppercase font-extrabold tracking-widest mt-1">Status: {paymentPhase}</p>
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
-              <span className="font-bold text-2xl text-gray-900">₹{job.budget}</span>
+            <div className="flex flex-col items-end space-y-3">
+              <span className="font-extrabold text-3xl text-[#F59E0B]">₹{job.budget}</span>
               {user?.role === 'client' && paymentPhase === 'pending' && (
                 <button 
                   onClick={handleDeposit}
-                  className="bg-blue-600 text-white font-semibold px-6 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-sm"
+                  className="bg-[#1A2B4A] text-white font-extrabold px-8 py-3.5 rounded-xl hover:bg-[#111C33] transition shadow-md w-full md:w-auto"
                 >
                   Deposit to Escrow
                 </button>
@@ -121,7 +174,7 @@ const EscrowPayment = () => {
               {user?.role === 'client' && paymentPhase === 'deposited' && job.status === 'completed' && (
                 <button 
                   onClick={handleRelease}
-                  className="bg-green-600 text-white font-semibold px-6 py-2.5 rounded-lg hover:bg-green-700 transition shadow-sm"
+                  className="bg-[#10B981] text-white font-extrabold px-8 py-3.5 rounded-xl hover:bg-[#059669] transition shadow-md"
                 >
                   Release Funds
                 </button>
@@ -131,12 +184,12 @@ const EscrowPayment = () => {
         </div>
 
         {user?.role === 'freelancer' && job.status === 'in-progress' && paymentPhase === 'deposited' && (
-          <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg text-center">
-            <h3 className="font-bold text-lg mb-2 text-blue-900">Submit Work for Review</h3>
-            <p className="text-blue-700 text-sm mb-4">Upload your deliverables. A cryptographic hash will be generated as undeniable proof of work.</p>
+          <div className="bg-[#FFFBEB] border border-[#FDE68A] p-8 rounded-xl text-center mt-6 shadow-sm">
+            <h3 className="font-extrabold text-xl mb-2 text-[#D97706]">Submit Work for Review</h3>
+            <p className="text-[#B45309] font-medium text-sm mb-6">Upload your deliverables. A cryptographic hash will be generated as undeniable proof of work.</p>
             <button 
               onClick={submitWorkProof}
-              className="bg-blue-600 text-white font-semibold py-3 px-8 rounded-lg hover:bg-blue-700 transition shadow-sm"
+              className="bg-[#1A2B4A] text-white font-extrabold py-3.5 px-8 rounded-xl hover:bg-[#111C33] transition shadow-md"
             >
               Submit Deliverables
             </button>

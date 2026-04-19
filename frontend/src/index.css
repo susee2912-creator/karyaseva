@@ -1,17 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  body {
+    background-color: #F0F4F8;
+    color: #1A2B4A;
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+@layer utilities {
+  .text-dark-navy {
+    color: #1A2B4A;
+  }
+  .bg-dark-navy {
+    background-color: #1A2B4A;
+  }
+  .text-saffron {
+    color: #F59E0B;
+  }
+  .bg-saffron {
+    background-color: #F59E0B;
+  }
+  .text-success-green {
+    color: #10B981;
+  }
+  .bg-success-green {
+    background-color: #10B981;
+  }
 }

@@ -1,4 +1,5 @@
 const Job = require("../models/Job");
+const WorkProof = require("../models/WorkProof");
 
 const calculateRisk = (budget) => {
   if (budget < 500) return "High";
@@ -41,15 +42,28 @@ exports.submitWork = async (req, res) => {
   try {
     const { jobId, workContent } = req.body;
     
-    // Hash the work content (acting as a blockchain-like proof)
-    const workProofHash = crypto.createHash('sha256').update(workContent).digest('hex');
+    const job = await Job.findById(jobId);
+    if (!job) return res.status(404).json({ error: "Job not found" });
+
+    // Hash the work content + timestamp + clientID + freelancerID
+    const timestamp = new Date().toISOString();
+    const dataToHash = workContent + timestamp + job.clientId + req.user.id;
+    const workProofHash = crypto.createHash('sha256').update(dataToHash).digest('hex');
 
     await Job.updateOne(
       { _id: jobId },
-      { status: "completed", workProofHash }
+      { status: "under-review", workProofHash } // Wait for client review
     );
 
-    res.json({ message: "Work submitted successfully", workProofHash });
+    const workProof = await WorkProof.create({
+      jobId,
+      clientId: job.clientId,
+      freelancerId: req.user.id,
+      fileHash: workProofHash,
+      workContent,
+    });
+
+    res.json({ message: "Work submitted securely. Waiting for client review.", workProofHash, workProof });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

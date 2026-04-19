@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { checkUserFraud } = require("../services/fraudService");
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -21,6 +22,9 @@ exports.register = async (req, res) => {
     });
 
     console.log(`\n📧 [EMAIL SIMULATION] Sent to ${email} -> Your Verification Code is: ${otp}\n`);
+
+    // Run background fraud check synchronously for now
+    await checkUserFraud(user);
 
     res.json(user);
   } catch (err) {
