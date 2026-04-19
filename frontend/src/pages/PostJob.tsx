@@ -13,7 +13,7 @@ const PostJob = () => {
 
   const handlePost = async () => {
     try {
-      await axios.post('http://localhost:5000/api/jobs', 
+      await axios.post('http://localhost:5000/api/jobs/post', 
         { title, description, budget: Number(budget) || 0 }, 
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );

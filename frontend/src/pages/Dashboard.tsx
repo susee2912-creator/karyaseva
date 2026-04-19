@@ -20,9 +20,11 @@ const Dashboard = () => {
     axios.get('http://localhost:5000/api/jobs/all', {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     }).then(res => {
-      const dashboardJobs = res.data.filter((j: any) => 
-        j.clientId === userData.id || j.freelancerId === userData.id
-      );
+      const dashboardJobs = res.data.filter((j: any) => {
+        if (!j) return false;
+        const matchingId = userData._id || userData.id;
+        return j.clientId === matchingId || j.freelancerId === matchingId;
+      });
       setJobs(dashboardJobs);
     }).catch(err => {
       if (err.response?.status === 401) {

@@ -31,7 +31,7 @@ const JobDetails = () => {
   }, [id]);
 
   useEffect(() => {
-    if (user?.role === 'client' && job?.clientId === user.id) {
+    if (user?.role === 'client' && job && job.clientId === (user._id || user.id)) {
       axios.get(`http://localhost:5000/api/applications/job/${job._id || job.id}`, { 
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } 
       })
@@ -44,7 +44,7 @@ const JobDetails = () => {
     try {
       await axios.post('http://localhost:5000/api/applications/apply', {
         jobId: job._id || job.id,
-        freelancerId: user.id,
+        freelancerId: user._id || user.id,
         proposal: proposalText
       }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       alert('Proposal submitted successfully!');
@@ -128,7 +128,7 @@ const JobDetails = () => {
                   Submit Proposal
                 </button>
               </div>
-            ) : user.role === 'client' && job.clientId === user.id && job.status === 'open' ? (
+            ) : user.role === 'client' && job.clientId === (user._id || user.id) && job.status === 'open' ? (
               <div className="space-y-4">
                 <p className="text-sm font-bold text-[#1A2B4A] mb-2 uppercase tracking-wide">Received Proposals ({applications.length})</p>
                 {applications.length === 0 && <p className="text-sm text-gray-500 font-medium">No applications yet.</p>}
