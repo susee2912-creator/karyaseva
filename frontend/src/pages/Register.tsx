@@ -16,9 +16,7 @@ const Register = () => {
     }
     try {
       const res = await axios.post('http://localhost:5000/api/auth/register', formData);
-      // Automatically log the user in to handle KYC step easily if they want...
-      // but if user says route to /kyc, we route to /kyc
-      navigate('/kyc');
+      navigate(`/verify-otp?userId=${res.data._id}&email=${formData.email}`);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registration failed');
     }

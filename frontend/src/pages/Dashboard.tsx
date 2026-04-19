@@ -7,8 +7,6 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [jobs, setJobs] = useState([]);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [otpInput, setOtpInput] = useState('');
   
   useEffect(() => {
     const userStr = localStorage.getItem('user');
@@ -35,43 +33,6 @@ const Dashboard = () => {
     });
   }, [navigate]);
 
-  const handleVerify = async () => {
-    if (!selectedFile) return;
-    const formData = new FormData();
-    formData.append('idDocument', selectedFile);
-    try {
-      await axios.post(`http://localhost:5000/api/users/${user.id}/upload-id`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      alert('Profile Verified Successfully!');
-      const updatedUser = { ...user, verified: true };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      setUser(updatedUser);
-    } catch (err) {
-      alert('Failed to upload ID document');
-    }
-  };
-
-  const handleVerifyEmail = async () => {
-    try {
-      await axios.post('http://localhost:5000/api/auth/verify-email', { userId: user.id || user._id, otp: otpInput });
-      const updatedUser = { ...user, isEmailVerified: true };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      setUser(updatedUser);
-      setOtpInput('');
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to verify email');
-    }
-  };
-
-  const handleResendOtp = async () => {
-    try {
-      await axios.post('http://localhost:5000/api/auth/resend-otp', { userId: user.id || user._id });
-      alert('OTP Resent! Check terminal.');
-    } catch (err: any) {
-      alert('Failed to resend OTP');
-    }
-  };
 
   if (!user) return null;
 
@@ -200,72 +161,6 @@ const Dashboard = () => {
               Verification Status
             </h2>
 
-            {!user.verified ? (
-              <>
-                <div className="bg-[#FFFBEB] border border-[#FDE68A] p-4 rounded-xl mb-8 flex items-start">
-                  <AlertTriangle className="w-5 h-5 text-[#F59E0B] mr-3 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-bold text-[#F59E0B] mb-1">Verification Required</p>
-                    <p className="text-xs text-orange-800 font-medium">Complete your KYC to unlock premium features and increase your trust score.</p>
-                  </div>
-                </div>
-
-                <div className="space-y-6 relative mb-8 pl-2">
-                  <div className="absolute left-[17px] top-[24px] bottom-[30px] w-0.5 bg-gray-200"></div>
-                  
-                  {user.isEmailVerified ? (
-                    <div className="flex relative z-10 items-center">
-                      <div className="w-8 h-8 bg-[#10B981] rounded-full flex items-center justify-center border-2 border-white mr-4 shadow-sm">
-                        <CheckCircle className="w-4 h-4 text-white" />
-                      </div>
-                      <p className="font-bold text-[#1A2B4A] text-sm">Email Verified</p>
-                    </div>
-                  ) : (
-                    <div className="flex relative z-10">
-                      <div className="w-8 h-8 bg-[#F59E0B] rounded-full flex items-center justify-center border-2 border-white mr-4 ring-2 ring-orange-100">
-                        <span className="text-white text-xs font-bold">1</span>
-                      </div>
-                      <div className="w-full">
-                        <p className="font-bold text-[#1A2B4A] text-sm mb-2 pt-1">Verify your Email</p>
-                        <div className="flex space-x-2">
-                          <input type="text" value={otpInput} onChange={(e) => setOtpInput(e.target.value)} placeholder="000000" className="border border-gray-300 rounded-lg px-2 py-1 w-20 text-center font-mono focus:border-[#1A2B4A] text-sm" />
-                          <button onClick={handleVerifyEmail} className="bg-[#1A2B4A] text-white px-3 py-1 rounded-lg text-sm font-bold">Verify</button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className={`flex relative z-10 ${!user.isEmailVerified ? 'opacity-40 pointer-events-none' : ''}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 border-white mr-4 ${user.isEmailVerified ? 'bg-[#F59E0B] ring-2 ring-orange-100' : 'bg-gray-300'}`}>
-                      <span className="text-white text-xs font-bold">2</span>
-                    </div>
-                    <div className="w-full">
-                      <p className="font-bold text-[#1A2B4A] text-sm mb-3 pt-1">Upload Government ID</p>
-                      <div className="relative border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-gray-50 transition">
-                        <UploadCloud className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                        {selectedFile ? (
-                          <p className="text-sm font-bold text-[#1A2B4A] truncate">{selectedFile.name}</p>
-                        ) : (
-                          <p className="text-sm font-bold text-gray-600">Click to choose file</p>
-                        )}
-                        <input type="file" onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex relative z-10 opacity-50 items-center">
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center border-2 border-white mr-4">
-                      <Lock className="w-3.5 h-3.5 text-gray-500" />
-                    </div>
-                    <p className="font-bold text-gray-500 text-sm">Admin Approval</p>
-                  </div>
-                </div>
-
-                <button onClick={handleVerify} disabled={!selectedFile || !user.isEmailVerified} className="w-full bg-[#F59E0B] text-white font-extrabold py-3.5 px-4 rounded-xl hover:bg-[#D97706] disabled:opacity-50 transition shadow-md">
-                  Upload & Verify ID
-                </button>
-              </>
-            ) : (
               <div className="flex flex-col items-center justify-center h-[300px] text-center">
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
                   <ShieldCheck className="w-10 h-10 text-[#10B981]" />
@@ -273,7 +168,6 @@ const Dashboard = () => {
                 <h3 className="font-extrabold text-2xl text-[#1A2B4A] mb-2">Profile Verified</h3>
                 <p className="text-gray-500 font-medium">Your identity has been securely verified. Trust score boosted!</p>
               </div>
-            )}
           </div>
         </div>
       </div>

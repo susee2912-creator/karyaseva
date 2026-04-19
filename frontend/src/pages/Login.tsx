@@ -16,10 +16,20 @@ const Login = () => {
       const res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
-      navigate('/dashboard');
+      
+      if (!res.data.user.verified) {
+        navigate('/kyc');
+      } else {
+        navigate('/dashboard');
+      }
       window.location.reload(); 
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed');
+      if (err.response?.data?.code === 'unverified_email') {
+        const userId = err.response.data.userId;
+        navigate(`/verify-otp?userId=${userId}&email=${email}`);
+      } else {
+        setError(err.response?.data?.message || 'Login failed');
+      }
     }
   };
 

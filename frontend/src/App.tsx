@@ -13,6 +13,9 @@ import Profile from './pages/Profile';
 import AdminPanel from './pages/AdminPanel';
 import RatingReview from './pages/RatingReview';
 
+import VerifyOtp from './pages/VerifyOtp';
+import KYC from './pages/KYC';
+
 function App() {
   return (
     <Router>
@@ -23,6 +26,8 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/verify-otp" element={<VerifyOtp />} />
+            <Route path="/kyc" element={<KYC />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/post-job" element={<PostJob />} />
             <Route path="/jobs" element={<JobBoard />} />

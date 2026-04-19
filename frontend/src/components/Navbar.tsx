@@ -16,7 +16,8 @@ const Navbar = () => {
     navigate('/login');
   };
 
-  if (location.pathname === '/login' || location.pathname === '/register') {
+  const pathsToHide = ['/login', '/register', '/verify-otp', '/kyc'];
+  if (pathsToHide.includes(location.pathname)) {
     return null;
   }
 
