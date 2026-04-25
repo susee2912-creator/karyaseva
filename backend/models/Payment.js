@@ -12,6 +12,10 @@ const paymentSchema = new mongoose.Schema(
       ref: "Job",
       required: true,
     },
+    transactionId: { type: String },
+    platformFee: { type: Number },
+    netAmount: { type: Number },
+
   },
   { timestamps: true }
 );

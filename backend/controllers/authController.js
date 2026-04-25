@@ -24,7 +24,11 @@ exports.register = async (req, res) => {
     
     // Explicitly print OTP to terminal for dev backup
     console.log(`\n======================================================`);
-    console.log(`🔐 [DEV MODE] REAL auth code for ${email}: ${sentOtp}`);
+    if (email.endsWith("@karyaseva.in")) {
+      console.log(`🎁 [DEMO MODE] FIXED bypass code for ${email}: ${sentOtp}`);
+    } else {
+      console.log(`🔐 [DEV MODE] REAL auth code for ${email}: ${sentOtp}`);
+    }
     console.log(`======================================================\n`);
 
     // Run background fraud check synchronously for now
@@ -68,7 +72,11 @@ exports.resendOtp = async (req, res) => {
 
     // Explicitly print OTP to terminal for dev backup
     console.log(`\n======================================================`);
-    console.log(`🔐 [DEV MODE] RESENT REAL auth code for ${user.email}: ${sentOtp}`);
+    if (user.email.endsWith("@karyaseva.in")) {
+      console.log(`🎁 [DEMO MODE] RESENT FIXED bypass code for ${user.email}: ${sentOtp}`);
+    } else {
+      console.log(`🔐 [DEV MODE] RESENT REAL auth code for ${user.email}: ${sentOtp}`);
+    }
     console.log(`======================================================\n`);
 
     res.json({ message: "New verification code sent successfully" });

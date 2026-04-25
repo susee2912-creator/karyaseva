@@ -26,6 +26,15 @@ const jobSchema = new mongoose.Schema(
       ref: "User",
       default: null,
     },
+    submission: {
+      fileUrl: String,
+      fileName: String,
+      notes: String,
+      status: { type: String, enum: ['submitted', 'approved', 'rejected'], default: 'submitted' },
+      timestamp: Date
+    },
+    revisionNotes: { type: String }
+
   },
   { timestamps: true }
 );

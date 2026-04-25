@@ -4,12 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Building, Briefcase, Filter, ShieldCheck } from 'lucide-react';
 
 const JobBoard = () => {
-  const [jobs, setJobs] = useState([]);
+  const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/jobs/all')
+    axios.get('http://localhost:5000/api/jobs/all', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    })
       .then(res => {
         setJobs(res.data);
         setLoading(false);

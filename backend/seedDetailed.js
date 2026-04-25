@@ -26,6 +26,7 @@ const seedDB = async () => {
       password: hashedPassword,
       role: "client",
       verified: true,
+      isEmailVerified: true,
     });
 
     // 2. Create Freelancers
@@ -37,6 +38,7 @@ const seedDB = async () => {
       trustScore: 85,
       completedJobs: 12,
       verified: true,
+      isEmailVerified: true,
     });
 
     const freelancer2 = await User.create({

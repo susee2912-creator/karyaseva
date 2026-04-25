@@ -40,31 +40,77 @@ const crypto = require("crypto");
 
 exports.submitWork = async (req, res) => {
   try {
-    const { jobId, workContent } = req.body;
-    
+    const jobId = req.body?.jobId || req.params?.jobId;
+    const workContent = req.body?.workContent || "";
+
+
+    const file = req.file;
+
+    console.log("Submit Work Debug:", { body: req.body, params: req.params, file: file?.originalname });
+
+
+
+
+    if (!file) return res.status(400).json({ error: "Deliverable file is required" });
+
     const job = await Job.findById(jobId);
     if (!job) return res.status(404).json({ error: "Job not found" });
 
-    // Hash the work content + timestamp + clientID + freelancerID
-    const timestamp = new Date().toISOString();
-    const dataToHash = workContent + timestamp + job.clientId + req.user.id;
-    const workProofHash = crypto.createHash('sha256').update(dataToHash).digest('hex');
-
     await Job.updateOne(
       { _id: jobId },
-      { status: "under-review", workProofHash } // Wait for client review
+      { 
+        status: "under-review",
+        submission: {
+          fileUrl: `/uploads/deliverables/${file.filename}`,
+          fileName: file.originalname,
+          notes: workContent,
+          status: 'submitted',
+          timestamp: new Date()
+        }
+      }
     );
 
-    const workProof = await WorkProof.create({
-      jobId,
-      clientId: job.clientId,
-      freelancerId: req.user.id,
-      fileHash: workProofHash,
-      workContent,
-    });
-
-    res.json({ message: "Work submitted securely. Waiting for client review.", workProofHash, workProof });
+    res.json({ message: "Work submitted successfully. Waiting for client approval." });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.reviewWork = async (req, res) => {
+  try {
+    const jobId = req.body?.jobId;
+    const action = req.body?.action;
+    const revisionNotes = req.body?.revisionNotes;
+
+
+    const job = await Job.findById(jobId);
+    if (!job) return res.status(404).json({ error: "Job not found" });
+
+    if (action === 'approve') {
+      await Job.updateOne(
+        { _id: jobId },
+        { 
+          "submission.status": 'approved',
+          // Note: status remains 'under-review' until payment is released? 
+          // Or does it go to 'completed' after payment? 
+          // Prompt says: "Confirm & Release Payment" -> Update job status to 'completed'
+          // So after approval, it stays 'under-review' or a new state like 'approved'?
+          // Let's use 'under-review' but submission status 'approved'.
+        }
+      );
+      res.json({ message: "Work approved. Please proceed to release payment." });
+    } else if (action === 'revision') {
+      await Job.updateOne(
+        { _id: jobId },
+        { 
+          status: 'in-progress',
+          "submission.status": 'rejected',
+          revisionNotes: revisionNotes
+        }
+      );
+      res.json({ message: "Revision requested. Freelancer has been notified." });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

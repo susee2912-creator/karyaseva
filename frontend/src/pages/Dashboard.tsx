@@ -5,27 +5,50 @@ import { Briefcase, ShieldCheck, Target, Plus, UploadCloud, CheckCircle, Lock, A
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
-  const [jobs, setJobs] = useState([]);
+  const [jobs, setJobs] = useState<any[]>([]);
+
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const matchingId = user ? (user._id || user.id) : null;
   
   useEffect(() => {
-    const userStr = localStorage.getItem('user');
-    if (!userStr) {
+    if (!user) {
       navigate('/login');
       return;
     }
-    const userData = JSON.parse(userStr);
-    setUser(userData);
     
+    // Fetch Jobs
     axios.get('http://localhost:5000/api/jobs/all', {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     }).then(res => {
-      const dashboardJobs = res.data.filter((j: any) => {
+      const associatedJobs = res.data.filter((j: any) => {
         if (!j) return false;
-        const matchingId = userData._id || userData.id;
         return j.clientId === matchingId || j.freelancerId === matchingId;
       });
-      setJobs(dashboardJobs);
+
+      if (user.role === 'freelancer') {
+        // Also fetch applications for freelancers
+        axios.get(`http://localhost:5000/api/applications/freelancer/${matchingId}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }).then(appRes => {
+          // Merge application jobs with associated jobs to avoid duplicates
+          const appJobs = appRes.data.map((app: any) => ({
+            ...app.jobId,
+            applicationStatus: app.status,
+            isProposal: true
+          }));
+          
+          const merged = [...associatedJobs];
+          appJobs.forEach((aj: any) => {
+            if (!merged.find((mj: any) => (mj._id || mj.id) === (aj._id || aj.id))) {
+              merged.push(aj);
+            }
+          });
+          setJobs(merged);
+        }).catch(err => console.error(err));
+      } else {
+        setJobs(associatedJobs);
+      }
     }).catch(err => {
       if (err.response?.status === 401) {
         localStorage.removeItem('token');
@@ -33,7 +56,7 @@ const Dashboard = () => {
         navigate('/login');
       }
     });
-  }, [navigate]);
+  }, [navigate, matchingId]);
 
 
   if (!user) return null;
@@ -140,13 +163,20 @@ const Dashboard = () => {
                         <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${job.status === 'open' ? 'bg-orange-100 text-orange-700' : job.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
                           {job.status}
                         </span>
+                        {job.isProposal && (
+                          <span className="ml-2 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-purple-100 text-purple-700">
+                            Proposal: {job.applicationStatus}
+                          </span>
+                        )}
                         <span className="mx-2">•</span>
                         <span>₹{job.budget}</span>
                       </div>
                     </div>
                     <div className="flex gap-3 w-full sm:w-auto">
                       <button onClick={() => navigate(`/jobs/${job._id || job.id}`)} className="text-[#1A2B4A] border border-[#1A2B4A] hover:bg-[#1A2B4A] hover:text-white font-bold text-sm px-4 py-2 rounded-lg transition sm:w-auto w-1/2 text-center">Details</button>
-                      <button onClick={() => navigate(`/escrow/${job._id || job.id}`)} className="bg-[#1A2B4A] hover:bg-[#111C33] text-white px-4 py-2 rounded-lg text-sm font-bold transition sm:w-auto w-1/2 text-center">Escrow</button>
+                      {(job.clientId === matchingId || job.freelancerId === matchingId) && job.status !== 'open' && (
+                        <button onClick={() => navigate(`/escrow/${job._id || job.id}`)} className="bg-[#1A2B4A] hover:bg-[#111C33] text-white px-4 py-2 rounded-lg text-sm font-bold transition sm:w-auto w-1/2 text-center">Escrow</button>
+                      )}
                     </div>
                   </div>
                 ))

@@ -12,12 +12,20 @@ connectDB();
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/jobs", require("./routes/jobRoutes"));
+app.use("/api/workspace", (req, res, next) => {
+  console.log(`[Workspace Route] ${req.method} ${req.url}`);
+  next();
+}, require("./routes/jobRoutes"));
 app.use("/api/applications", require("./routes/applicationRoutes"));
+
+
 app.use("/api/payments", require("./routes/paymentRoutes"));
 app.use("/api/reviews", require("./routes/reviewRoutes"));
 

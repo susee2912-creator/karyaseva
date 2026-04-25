@@ -30,6 +30,9 @@ const userSchema = new mongoose.Schema(
     idDocument: {
       type: String,
     },
+    upiId: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

@@ -1,13 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Star } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const RatingReview = () => {
+  const { jobId } = useParams();
+  const navigate = useNavigate();
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState('');
+  const [job, setJob] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
-  const submitReview = () => {
-    alert("Review Submitted! AI Trust Score will be successfully recalculated.");
-    window.location.href = "/dashboard";
+  const userStr = localStorage.getItem('user');
+  const currentUser = userStr ? JSON.parse(userStr) : null;
+
+  useEffect(() => {
+    axios.get('http://localhost:5000/api/jobs/all', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    }).then(res => {
+      const found = res.data.find((j: any) => (j._id || j.id).toString() === jobId);
+      setJob(found);
+    }).catch(err => console.error(err));
+  }, [jobId]);
+
+  const submitReview = async () => {
+    if (!job || !currentUser) return;
+    
+    setLoading(true);
+    try {
+      // Determine rateeId: if current user is client, ratee is freelancer, and vice versa.
+      const isClient = currentUser.role === 'client';
+      const rateeId = isClient ? job.freelancerId : job.clientId;
+      const raterId = currentUser._id || currentUser.id;
+
+      await axios.post('http://localhost:5000/api/reviews/add', {
+        jobId,
+        raterId,
+        rateeId,
+        rating,
+        comment: review
+      }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+
+      alert("Review Submitted! Trust Score updated.");
+      navigate("/dashboard");
+    } catch (error) {
+      alert("Failed to submit review.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

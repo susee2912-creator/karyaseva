@@ -3,7 +3,10 @@ const Job = require("../models/Job");
 const User = require("../models/User");
 
 exports.applyJob = async (req, res) => {
-  const { jobId, freelancerId, proposal } = req.body;
+  const jobId = req.body?.jobId;
+  const freelancerId = req.body?.freelancerId;
+  const proposal = req.body?.proposal;
+
 
   const app = await Application.create({
     jobId,
@@ -15,7 +18,9 @@ exports.applyJob = async (req, res) => {
 };
 
 exports.hireFreelancer = async (req, res) => {
-  const { applicationId, jobId } = req.body;
+  const applicationId = req.body?.applicationId;
+  const jobId = req.body?.jobId;
+
 
   try {
     const application = await Application.findById(applicationId);
@@ -42,6 +47,17 @@ exports.getJobApplications = async (req, res) => {
     const { jobId } = req.params;
     const applications = await Application.find({ jobId })
       .populate("freelancerId", "name trustScore verified");
+    res.json(applications);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getFreelancerApplications = async (req, res) => {
+  try {
+    const { freelancerId } = req.params;
+    const applications = await Application.find({ freelancerId })
+      .populate("jobId");
     res.json(applications);
   } catch (error) {
     res.status(500).json({ error: error.message });

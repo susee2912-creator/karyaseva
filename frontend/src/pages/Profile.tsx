@@ -1,13 +1,45 @@
 import React, { useEffect, useState } from 'react';
-import { User, Shield, Star, CheckCircle, Briefcase, Award } from 'lucide-react';
+import { User as UserIcon, Shield, Star, CheckCircle, Briefcase, Award, IndianRupee } from 'lucide-react';
+import axios from 'axios';
 
 const Profile = () => {
   const [user, setUser] = useState<any>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [name, setName] = useState('');
+  const [upiId, setUpiId] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
-    if (userStr) setUser(JSON.parse(userStr));
+    if (userStr) {
+      const userData = JSON.parse(userStr);
+      setUser(userData);
+      setName(userData.name);
+      setUpiId(userData.upiId || '');
+    }
   }, []);
+
+  const handleUpdate = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const userId = user._id || user.id;
+      const res = await axios.put(`http://localhost:5000/api/users/${userId}`, {
+        name,
+        upiId
+      }, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+
+      const updatedUser = res.data.user;
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setEditMode(false);
+      alert("Profile updated successfully!");
+    } catch (error) {
+      alert("Failed to update profile.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!user) return <div className="text-center mt-20 font-bold text-[#1A2B4A]">Loading Profile...</div>;
 
@@ -24,14 +56,30 @@ const Profile = () => {
         )}
 
         <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center text-[#1A2B4A] mb-6 md:mb-0 md:mr-8 border-4 border-[#F59E0B] shadow-xl relative z-10">
-          <User className="w-16 h-16" />
+          <UserIcon className="w-16 h-16" />
         </div>
         
         <div className="flex-1 relative z-10">
-          <h1 className="text-4xl font-extrabold text-white mb-2">{user.name}</h1>
-          <span className="bg-white/10 border border-white/20 text-white px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wider inline-block mb-4">
-            {user.role}
-          </span>
+          {editMode ? (
+            <input 
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="text-4xl font-extrabold text-[#1A2B4A] mb-2 bg-white rounded px-2 w-full md:w-auto"
+            />
+          ) : (
+            <h1 className="text-4xl font-extrabold text-white mb-2">{user.name}</h1>
+          )}
+          <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-4 mb-4">
+            <span className="bg-white/10 border border-white/20 text-white px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wider inline-block">
+              {user.role}
+            </span>
+            <button 
+              onClick={() => editMode ? handleUpdate() : setEditMode(true)}
+              className="bg-[#F59E0B] text-white px-4 py-1 rounded-full text-xs font-extrabold hover:bg-[#D97706] transition"
+            >
+              {loading ? 'Saving...' : editMode ? 'Save Profile' : 'Edit Profile'}
+            </button>
+          </div>
           <div className="flex items-center justify-center md:justify-start text-gray-300 font-medium">
             <span>{user.email}</span>
             {user.isEmailVerified && <CheckCircle className="w-4 h-4 ml-2 text-[#10B981]" />}
@@ -50,7 +98,28 @@ const Profile = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
           <h3 className="text-lg font-extrabold text-[#1A2B4A] mb-6 border-b border-gray-100 pb-3 flex items-center">
-            <Award className="w-5 h-5 mr-2 text-[#F59E0B]" /> Top Skills
+            <IndianRupee className="w-5 h-5 mr-2 text-[#F59E0B]" /> Payment Details
+          </h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">UPI ID</label>
+              {editMode ? (
+                <input 
+                  value={upiId}
+                  onChange={(e) => setUpiId(e.target.value)}
+                  placeholder="e.g., rahul@okaxis"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1A2B4A] transition font-medium text-sm"
+                />
+              ) : (
+                <p className="font-extrabold text-[#1A2B4A]">{user.upiId || 'Not Set'}</p>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+          <h3 className="text-lg font-extrabold text-[#1A2B4A] mb-6 border-b border-gray-100 pb-3 flex items-center">
+            <Award className="w-5 h-5 mr-2 text-[#F59E0B]" /> Professional info
           </h3>
           <div className="flex flex-wrap gap-2">
             <span className="bg-[#F0F4F8] text-[#1A2B4A] px-3 py-1 rounded-md text-sm font-bold">React.js</span>

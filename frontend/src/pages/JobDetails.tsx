@@ -54,7 +54,7 @@ const JobDetails = () => {
     }
   };
 
-  const handleHire = async (appId: number) => {
+  const handleHire = async (appId: string) => {
     try {
       await axios.post('http://localhost:5000/api/applications/hire', {
         applicationId: appId,
@@ -133,17 +133,17 @@ const JobDetails = () => {
                 <p className="text-sm font-bold text-[#1A2B4A] mb-2 uppercase tracking-wide">Received Proposals ({applications.length})</p>
                 {applications.length === 0 && <p className="text-sm text-gray-500 font-medium">No applications yet.</p>}
                 {applications.map((app: any) => (
-                  <div key={app.id} className="bg-white p-6 border border-gray-200 rounded-xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center">
+                  <div key={app._id || app.id} className="bg-white p-6 border border-gray-200 rounded-xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center">
                     <div className="flex-1 mb-4 md:mb-0">
                       <div className="flex items-center space-x-2 mb-3 border-b border-gray-100 pb-2">
                         <UserIcon className="w-5 h-5 text-gray-400" />
-                        <span className="font-extrabold text-[#1A2B4A] text-lg">{app.User?.name}</span>
-                        <span className="text-xs bg-[#1A2B4A] text-[#F59E0B] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">Score: {app.User?.trustScore || 50}</span>
+                        <span className="font-extrabold text-[#1A2B4A] text-lg">{app.freelancerId?.name}</span>
+                        <span className="text-xs bg-[#1A2B4A] text-[#F59E0B] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">Score: {app.freelancerId?.trustScore || 50}</span>
                       </div>
                       <p className="text-sm text-gray-600 font-medium italic pl-2 border-l-2 border-gray-200">"{app.proposal}"</p>
                     </div>
                     <button 
-                      onClick={() => handleHire(app.id)}
+                      onClick={() => handleHire(app._id || app.id)}
                       className="w-full md:w-auto bg-[#10B981] hover:bg-green-600 text-white text-sm font-extrabold py-3 px-6 rounded-xl shadow-md transition ml-0 md:ml-6 mt-4 md:mt-0"
                     >
                       Hire & Escrow

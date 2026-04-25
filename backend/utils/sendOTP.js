@@ -6,7 +6,9 @@ const generateOTP = () => {
 };
 
 const sendOTPEmail = async (email, name) => {
-  const otp = generateOTP();
+  // Static OTP for demo accounts to bypass non-existent domain mail delivery
+  const isDemo = email.endsWith("@karyaseva.in");
+  const otp = isDemo ? "123456" : generateOTP();
 
   await OTP.deleteMany({ email });
   await OTP.create({ email, otp });

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { ShieldAlert, Users, FolderKanban } from 'lucide-react';
 
 const AdminPanel = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

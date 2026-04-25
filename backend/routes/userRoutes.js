@@ -17,5 +17,6 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 router.post("/:userId/upload-id", upload.single("idDocument"), userController.uploadID);
+router.put("/:userId", userController.updateProfile);
 
 module.exports = router;
